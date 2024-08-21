@@ -1,0 +1,199 @@
+This document provides a step-by-step guide for conducting manual security testing on a website. Each section includes the objective, detailed steps, examples, and recommended tools.
+
+## 1. Information Gathering
+
+**Objective:** Gather as much information as possible about the target website.
+
+### Steps:
+
+1. **Check Domain and WHOIS Information:**
+   - Use online tools like [Whois Lookup](https://whois.domaintools.com/) to find domain registration details.
+   - **Example:** Look up the domain to identify the registrar, owner, contact information, and server details.
+
+2. **Examine the Website:**
+   - Append `/sitemap.xml` or `/robots.txt` to the main URL to view these files.
+   - **Example:** Access `https://example.com/sitemap.xml` to see the indexed pages and `https://example.com/robots.txt` for any restricted paths.
+
+3. **Analyze Page Source:**
+   - Review the HTML source code for comments or hidden data.
+   - **Example:** Right-click on the page, select “View Page Source,” and search for comments or unused scripts.
+
+4. **Discover Subdomains:**
+   - Use tools like [Sublist3r](https://github.com/aboul3la/Sublist3r) to find subdomains.
+   - **Example:** Execute `python sublist3r.py -d example.com` to list potential subdomains.
+
+5. **Perform DNS Enumeration:**
+   - Use DNS lookup tools to gather information about the domain's DNS records.
+   - **Example:** Use `nslookup` or `dig` commands to find DNS information such as A, MX, and TXT records.
+
+## 2. Input Validation Testing
+
+**Objective:** Check how the website handles user input and whether it validates inputs correctly.
+
+### Steps:
+
+1. **Form Fields:**
+   - Submit forms with unexpected data, such as special characters (`<>`), long strings, or HTML tags (`<script>`).
+   - **Example:** Test an email field with `test@example.com ' OR 1=1--` and observe the response.
+
+2. **Search Boxes:**
+   - Enter terms like `' OR 1=1--` or `<script>alert('test')</script>` to check how inputs are handled.
+   - **Example:** Search for `test123<>` to see if special characters are sanitized.
+
+3. **URL Manipulation:**
+   - Modify query parameters, e.g., change `?id=10` to `?id=' OR 1=1--`.
+   - **Example:** If accessing `https://example.com/profile?id=10`, alter the URL to `https://example.com/profile?id=10;DROP TABLE users;` and observe results.
+
+4. **HTTP Methods Testing:**
+   - Test HTTP methods like `PUT`, `DELETE`, `TRACE`, etc., to see if they are allowed.
+   - **Example:** Use tools like Postman to send requests using various methods to sensitive endpoints.
+
+## 3. Cross-Site Scripting (XSS) Testing
+
+**Objective:** Identify if the site is vulnerable to XSS attacks where scripts can be injected and executed in a user's browser.
+
+### Steps:
+
+1. **Payload Injection:**
+   - Insert JavaScript payloads like `<script>alert('XSS')</script>` into form fields and URLs.
+   - **Example:** Test a comment box with the payload `<script>alert('XSS')</script>` and check if it gets executed.
+
+2. **Observation:**
+   - Verify if the payload is executed or returned unsanitized.
+   - **Example:** If the alert box appears, the input is likely not sanitized correctly.
+
+3. **DOM-Based XSS:**
+   - Test client-side scripts that handle user input.
+   - **Example:** Modify URL fragments (`#` values) to inject scripts and observe behavior.
+
+## 4. Cross-Site Request Forgery (CSRF) Testing
+
+**Objective:** Test if unauthorized commands can be transmitted from a user that the website trusts.
+
+### Steps:
+
+1. **Test for CSRF Tokens:**
+   - Check if forms and requests include anti-CSRF tokens.
+   - **Example:** Inspect network requests in Developer Tools for CSRF tokens in POST requests.
+
+2. **Simulate a CSRF Attack:**
+   - Use tools like OWASP ZAP to craft requests that execute actions without authentication.
+   - **Example:** Attempt to change user settings by sending crafted requests lacking CSRF tokens.
+
+## 5. SQL Injection Testing
+
+**Objective:** Check if the website is vulnerable to SQL injection attacks where an attacker can execute arbitrary SQL code.
+
+### Steps:
+
+1. **Test Input Fields and URLs:**
+   - Inject SQL commands like `' OR '1'='1` into input fields and URLs.
+   - **Example:** Enter `' OR '1'='1` in login fields to bypass authentication if vulnerable.
+
+2. **Error Messages:**
+   - Look for database errors that reveal information about the database.
+   - **Example:** Errors like `SQL syntax error` can indicate an injection point.
+
+3. **Blind SQL Injection:**
+   - Use timing attacks or Boolean-based testing to detect SQLi vulnerabilities.
+   - **Example:** Use payloads like `' OR SLEEP(5)--` to see if the response time changes.
+
+## 6. Authentication and Session Management
+
+**Objective:** Ensure secure authentication and session management practices are in place.
+
+### Steps:
+
+1. **Test Login Pages:**
+   - Try common passwords and observe account lockout mechanisms.
+   - **Example:** Attempt multiple failed logins to check for account lockout or CAPTCHA.
+
+2. **Session IDs:**
+   - Verify that session IDs are not exposed in URLs and regenerate upon login/logout.
+   - **Example:** Use Developer Tools to inspect cookies and ensure IDs change post-login.
+
+3. **Password Recovery:**
+   - Assess the security of the password reset process.
+   - **Example:** Test if reset links expire and require user verification.
+
+## 7. File Upload and Download Vulnerabilities
+
+**Objective:** Check if the website allows malicious file uploads or insecure downloads.
+
+### Steps:
+
+1. **Upload Files:**
+   - Try uploading files with different extensions (`.exe`, `.php`, `.jpg`) and observe behavior.
+   - **Example:** Upload a `.php` file disguised as an image and attempt to execute it.
+
+2. **Download Security:**
+   - Verify downloads are secured and transmitted over HTTPS.
+   - **Example:** Check if the downloaded files maintain integrity and are not tampered with.
+
+## 8. Error Handling and Information Disclosure
+
+**Objective:** Ensure the application does not disclose unnecessary information through error messages.
+
+### Steps:
+
+1. **Error Pages:**
+   - Trigger errors by providing unexpected input and check if detailed information is exposed.
+   - **Example:** Enter incorrect data types in forms and observe if stack traces are shown.
+
+2. **Content Security Policy:**
+   - Verify if a CSP is implemented to mitigate XSS risks.
+   - **Example:** Check response headers for `Content-Security-Policy` directives.
+
+## 9. HTTPS and SSL/TLS Testing
+
+**Objective:** Verify that the website uses secure protocols for data transmission.
+
+### Steps:
+
+1. **SSL/TLS Certificate:**
+   - Check if the website uses a valid SSL/TLS certificate.
+   - **Example:** Use online tools like [SSL Labs](https://www.ssllabs.com/ssltest/) to assess the certificate.
+
+2. **Mixed Content:**
+   - Ensure all resources are loaded over HTTPS.
+   - **Example:** Use browser tools to identify HTTP resources on an HTTPS page.
+
+3. **Protocol Versions:**
+   - Ensure that insecure protocol versions like SSLv3 and TLS 1.0 are disabled.
+   - **Example:** Test using tools like [SSL Labs](https://www.ssllabs.com/ssltest/) to check protocol support.
+
+## 10. Security Headers
+
+**Objective:** Verify the presence of security headers that help protect the website.
+
+### Steps:
+
+1. **Inspect HTTP Headers:**
+   - Use browser tools to check headers like `Content-Security-Policy`, `Strict-Transport-Security`, and `X-Content-Type-Options`.
+   - **Example:** Use Developer Tools to view response headers and ensure security headers are present.
+
+## Tools to Assist Testing
+
+- **Browser Developer Tools:** Use Chrome, Firefox, or Edge developer tools to inspect elements and monitor network traffic.
+- **Burp Suite:** Intercept and modify HTTP requests to test security.
+- **OWASP ZAP (Zed Attack Proxy):** An open-source tool for finding vulnerabilities.
+- **Postman:** Useful for testing API endpoints.
+
+## Reporting Findings
+
+1. Documentation:
+   - Clearly document each step taken and any vulnerabilities found, including screenshots.
+   - **Example:** Create a report detailing the testing process and results with visual evidence.
+
+2. Severity Assessment:
+   - Rate the severity of each issue based on its potential impact.
+   - **Example:** Use a severity scale (e.g., Critical, High, Medium, Low) to prioritize vulnerabilities.
+
+3. Recommendations:
+   - Provide suggestions for fixing or mitigating each vulnerability.
+   - **Example:** Recommend input validation and sanitization techniques to prevent SQL injection.
+
+
+
+
+                                                                                                        Document Prepared by: Ellie N. 
